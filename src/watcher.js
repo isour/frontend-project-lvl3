@@ -1,18 +1,19 @@
 // @ts-check
 import onChange from 'on-change';
 import { sel, SELECTORS } from './helpers';
+import loc from './locale';
 
 const init = (initState) => {
   const renderError = (state) => {
-    const error = state.rssForm.url.errorText;
+    const { errorKey } = state.rssForm.url;
     const input$ = sel(SELECTORS.input);
     const error$ = sel(SELECTORS.error);
-    if (error) {
+    if (errorKey) {
       input$.classList.add('is-invalid');
     } else {
       input$.classList.remove('is-invalid');
     }
-    error$.innerText = error;
+    error$.innerText = loc.t(errorKey);
     // console.log(state.rssForm.url.errorText);
   };
 
@@ -33,7 +34,7 @@ const init = (initState) => {
       //   .catch((e) => e.message);
     };
 
-    if (path === 'rssForm.url.errorText' && value !== previousValue) {
+    if (path === 'rssForm.url.errorKey' && value !== previousValue) {
       renderError(initState);
     }
   });

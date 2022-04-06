@@ -1,7 +1,8 @@
 // @ts-check
 
-import { object, string } from 'yup';
+import { setLocale, string } from 'yup';
 import { sel, SELECTORS } from './helpers';
+import yupLocale from './localization/yup';
 import watch from './watcher';
 
 const init = () => {
@@ -10,7 +11,7 @@ const init = () => {
       status: 'default',
       url: {
         value: '',
-        errorText: '',
+        errorKey: '',
       },
     },
     rssList: [],
@@ -19,6 +20,7 @@ const init = () => {
   const watchedState = watch(state);
 
   const validateURL = (value) => {
+    setLocale(yupLocale);
     const validationSchema = string().url().required();
 
     return validationSchema
@@ -35,9 +37,11 @@ const init = () => {
         url: currentValue,
       });
       watchedState.rssForm.url.value = '';
-      watchedState.rssForm.url.errorText = '';
+      watchedState.rssForm.url.errorKey = '';
+      watchedState.rssForm.status = 'valid';
     } else {
-      watchedState.rssForm.url.errorText = 'Rss уже существует.';
+      watchedState.rssForm.url.errorKey = 'rssExist';
+      watchedState.rssForm.status = 'error';
     }
   };
 
@@ -51,7 +55,8 @@ const init = () => {
         if (!error) {
           processRSS();
         } else {
-          watchedState.rssForm.url.errorText = error;
+          watchedState.rssForm.url.errorKey = error;
+          watchedState.rssForm.status = 'error';
         };
       })
       .catch((e) => e.message);
