@@ -8,153 +8,152 @@ import watch from './watcher';
 
 const getProxiedUrl = (url) => `https://allorigins.hexlet.app/raw?url=${url}`;
 
-const init = () => {
-  const state = {
-    rssForm: {
-      status: 'default',
-      url: {
-        value: '',
-        errorKey: '',
-      },
+const state = {
+  rssForm: {
+    status: 'default',
+    url: {
+      value: '',
+      errorKey: '',
     },
-    channelList: [],
-    postsList: [],
-    modal: {
-      id: null,
-      text: null,
-      title: null,
-    },
-    uiState: {
-      watchedPosts: [],
-    },
-  };
+  },
+  channelList: [],
+  postsList: [],
+  modal: {
+    id: null,
+    text: null,
+    title: null,
+  },
+  uiState: {
+    watchedPosts: [],
+  },
+};
 
-  const watchedState = watch(state);
+const watchedState = watch(state);
 
-  const setError = (errorKey, errorStatus) => {
-    watchedState.rssForm.url.errorKey = errorKey;
-    watchedState.rssForm.status = errorStatus;
-    if (errorStatus === 'valid') watchedState.rssForm.url.value = null;
-  };
+const setError = (errorKey, errorStatus) => {
+  watchedState.rssForm.url.errorKey = errorKey;
+  watchedState.rssForm.status = errorStatus;
+  if (errorStatus === 'valid') watchedState.rssForm.url.value = null;
+};
 
-  const uid = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
 
-  const validateURL = (value) => {
-    setLocale(yupLocale);
-    const validationSchema = string().url().required();
+const validateURL = (value) => {
+  setLocale(yupLocale);
+  const validationSchema = string().url().required();
 
-    return validationSchema
-      .validate(value)
-      .then(() => null)
-      .catch((e) => e.message);
-  };
+  return validationSchema
+    .validate(value)
+    .then(() => null)
+    .catch((e) => e.message);
+};
 
-  const updateFeeds = () => {
-    setTimeout(() => {
-      const promises = [];
-      watchedState.channelList.forEach((channel) => {
-        // eslint-disable-next-line no-use-before-define
-        promises.push(processRSS(channel.url, true));
-      });
-      const promise = Promise.all(promises);
-      return promise.finally(() => {
-        updateFeeds();
-      });
-    }, 5000);
-  };
+const updateFeeds = () => {
+  setTimeout(() => {
+    const promises = [];
+    watchedState.channelList.forEach((channel) => {
+      // eslint-disable-next-line no-use-before-define
+      promises.push(processRSS(channel.url, true));
+    });
+    const promise = Promise.all(promises);
+    return promise.finally(() => {
+      updateFeeds();
+    });
+  }, 5000);
+};
 
-  const getFeed = (url, update = false) => {
-    let feedObject = {};
+const getFeed = (url, update = false) => {
+  let feedObject = {};
 
-    const parser = new DOMParser();
-    return axios.get(getProxiedUrl(url))
-      .then((response) => {
-        let parsedRSS;
-        try {
-          parsedRSS = parser.parseFromString(response.data, 'text/xml');
-        } catch (error) {
-          setError(error, 'invalid');
-        }
-        const currentId = uid();
-
-        feedObject = {
-          url,
-          id: currentId,
-          status: 'loaded',
-          title: parsedRSS.querySelector('title').textContent,
-          description: parsedRSS.querySelector('description').textContent,
-        };
-
-        const newPosts = [...parsedRSS.querySelectorAll('item')];
-        const oldsPosts = watchedState.postsList.map((post) => post.title);
-
-        const differenceItems$ = newPosts.filter((x) => !oldsPosts.includes(x.querySelector('title').textContent));
-
-        const differecePosts = [];
-        differenceItems$.forEach((item) => {
-          differecePosts.push({
-            title: item.querySelector('title').textContent,
-            guid: uid(),
-            link: item.querySelector('link').textContent,
-            description: item.querySelector('description').textContent,
-            pubDate: item.querySelector('pubDate').textContent,
-            parentId: currentId,
-          });
-        });
-
-        watchedState.postsList = [
-          ...watchedState.postsList,
-          ...differecePosts,
-        ];
-
-        if (!update) {
-          watchedState.channelList.push(feedObject)
-          setError('rssLoaded', 'valid');
-        }
-      })
-      .catch((error) => {
+  const parser = new DOMParser();
+  return axios.get(getProxiedUrl(url))
+    .then((response) => {
+      let parsedRSS;
+      try {
+        parsedRSS = parser.parseFromString(response.data, 'text/xml');
+      } catch (error) {
         setError(error, 'invalid');
+      }
+      const currentId = uid();
+
+      feedObject = {
+        url,
+        id: currentId,
+        status: 'loaded',
+        title: parsedRSS.querySelector('title').textContent,
+        description: parsedRSS.querySelector('description').textContent,
+      };
+
+      const newPosts = [...parsedRSS.querySelectorAll('item')];
+      const oldsPosts = watchedState.postsList.map((post) => post.title);
+
+      const differenceItems$ = newPosts.filter((x) => !oldsPosts.includes(x.querySelector('title').textContent));
+
+      const differecePosts = [];
+      differenceItems$.forEach((item) => {
+        differecePosts.push({
+          title: item.querySelector('title').textContent,
+          guid: uid(),
+          link: item.querySelector('link').textContent,
+          description: item.querySelector('description').textContent,
+          pubDate: item.querySelector('pubDate').textContent,
+          parentId: currentId,
+        });
       });
-  };
 
-  const processRSS = (currentURL, update = false) => {
-    const { channelList } = watchedState;
-    // console.log(channelList.filter((feed) => feed.url === currentURL).length, 'process');
-    if (channelList.filter((feed) => feed.url === currentURL).length === 0 || update) {
-      if (!update) watchedState.rssForm.url.value = '';
-      getFeed(currentURL, update);
-      return;
-    }
-    setError('rssExist', 'invalid');
-  };
+      watchedState.postsList = [
+        ...watchedState.postsList,
+        ...differecePosts,
+      ];
 
-  const formSubmit = (event) => {
-    event.preventDefault();
-    const inputValue = sel(SELECTORS.input).value.trim();
+      if (!update) {
+        watchedState.channelList.push(feedObject)
+        setError('rssLoaded', 'valid');
+      }
+    })
+    .catch((error) => {
+      setError(error, 'invalid');
+    });
+};
 
-    watchedState.rssForm.url.value = inputValue;
-    watchedState.rssForm.status = 'pending';
+const processRSS = (currentURL, update = false) => {
+  const { channelList } = watchedState;
+  if (channelList.filter((feed) => feed.url === currentURL).length === 0 || update) {
+    if (!update) watchedState.rssForm.url.value = '';
+    getFeed(currentURL, update);
+    return;
+  }
+  setError('rssExist', 'invalid');
+};
 
-    validateURL(inputValue)
-      .then((error) => {
-        if (!error) {
-          processRSS(watchedState.rssForm.url.value);
-        } else {
-          setError(error, 'invalid');
-        }
-      })
-      .catch((e) => e.message);
-  };
+const formSubmit = (event) => {
+  event.preventDefault();
+  const inputValue = sel(SELECTORS.input).value.trim();
 
-  const modalClick = (event) => {
-    if (!('id' in event.target.dataset)) {
-      return;
-    }
+  watchedState.rssForm.url.value = inputValue;
+  watchedState.rssForm.status = 'pending';
 
-    watchedState.modal.id = event.target.dataset.id;
-    watchedState.uiState.watchedPosts.push(watchedState.modal.id);
-  };
+  validateURL(inputValue)
+    .then((error) => {
+      if (!error) {
+        processRSS(watchedState.rssForm.url.value);
+      } else {
+        setError(error, 'invalid');
+      }
+    })
+    .catch((e) => e.message);
+};
 
+const modalClick = (event) => {
+  if (!('id' in event.target.dataset)) {
+    return;
+  }
+
+  watchedState.modal.id = event.target.dataset.id;
+  watchedState.uiState.watchedPosts.push(watchedState.modal.id);
+};
+
+const init = () => {
   document.querySelector(SELECTORS.form).addEventListener('submit', formSubmit);
   document.querySelector(SELECTORS.posts).addEventListener('click', modalClick);
 
