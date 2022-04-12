@@ -118,7 +118,7 @@ const init = () => {
         }
       })
       .catch((error) => {
-        setError(error, 'invalid');
+        console.log(error);
       });
   };
   
