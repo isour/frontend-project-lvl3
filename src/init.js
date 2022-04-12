@@ -112,7 +112,7 @@ const getFeed = (url, update = false) => {
       ];
 
       if (!update) {
-        watchedState.channelList.push(feedObject)
+        watchedState.channelList.push(feedObject);
         setError('rssLoaded', 'valid');
       }
     })

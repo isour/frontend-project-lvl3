@@ -22,11 +22,12 @@ const renderForm = (state) => {
       error$.classList.add('text-success');
       error$.classList.remove('text-danger');
       input$.classList.remove('is-invalid');
+      input$.focus();
       break;
     default:
-      break;
+      throw new Error(`Unknown status: '${state.status}'`);
   }
-  error$.innerText = loc.t(errorKey);
+  error$.innerHTML = loc.t(errorKey);
 };
 
 const renderPosts = (state) => {
