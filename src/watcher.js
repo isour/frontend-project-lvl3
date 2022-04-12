@@ -1,7 +1,7 @@
 // @ts-check
 import onChange from 'on-change';
-import { sel, SELECTORS } from './helpers';
-import loc from './localization/locale';
+import { sel, SELECTORS } from './helpers.js';
+import loc from './localization/locale.js';
 
 const renderForm = (state) => {
   const { errorKey } = state.rssForm.url;

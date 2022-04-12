@@ -2,9 +2,9 @@
 
 import { setLocale, string } from 'yup';
 import axios from 'axios';
-import { sel, SELECTORS } from './helpers';
-import yupLocale from './localization/yup';
-import watch from './watcher';
+import { sel, SELECTORS } from './helpers.js';
+import yupLocale from './localization/yup.js';
+import watch from './watcher.js';
 
 const getProxiedUrl = (url) => `https://allorigins.hexlet.app/raw?url=${url}`;
 

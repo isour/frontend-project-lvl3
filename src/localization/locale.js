@@ -1,5 +1,5 @@
 import i18next from 'i18next';
-import resources from './locale_resources';
+import resources from './locale_resources.js';
 
 const i18Instance = i18next.createInstance();
 
