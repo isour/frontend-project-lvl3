@@ -10,22 +10,25 @@ const renderForm = (state) => {
   const error$ = sel(SELECTORS.error);
   const buttonSubmit$ = sel(SELECTORS.buttonSubmit);
 
-  buttonSubmit$.disabled = status === 'pending';
-
   switch (status) {
+    case 'pending':
+      buttonSubmit$.disabled = true;
+      break;
     case 'invalid':
       input$.classList.add('is-invalid');
       error$.classList.add('text-danger');
       error$.classList.remove('text-success');
+      buttonSubmit$.disabled = false;
       break;
     case 'valid':
       error$.classList.add('text-success');
       error$.classList.remove('text-danger');
       input$.classList.remove('is-invalid');
       input$.focus();
+      buttonSubmit$.disabled = false;
       break;
     default:
-      throw new Error(`Unknown status: '${state.status}'`);
+      throw new Error(`Unknown status: '${status}'`);
   }
   error$.innerHTML = loc.t(errorKey);
 };
