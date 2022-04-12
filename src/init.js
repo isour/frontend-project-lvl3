@@ -6,7 +6,12 @@ import { sel, SELECTORS } from './helpers.js';
 import yupLocale from './localization/yup.js';
 import watch from './watcher.js';
 
-const getProxiedUrl = (url) => `https://allorigins.hexlet.app/get?url=${url}`;
+const getProxiedUrl = (url) => {
+  const urlResult = new URL('/get', 'https://allorigins.hexlet.app');
+  urlResult.searchParams.set('url', url);
+  urlResult.searchParams.set('disableCache', 'true');
+  return urlResult.toString();
+};
 
 const state = {
   rssForm: {
