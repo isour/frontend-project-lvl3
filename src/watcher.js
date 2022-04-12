@@ -91,7 +91,7 @@ const init = (initState, i18) => {
       renderModal(initState);
     }
     if (path === 'rssForm.url.value' && value === null) {
-      document.querySelector(SELECTORS.form).reset();
+      document.querySelector(SELECTORS.input).value = '';
     }
     if (path === 'postsList' || path === 'channelList') {
       renderChannels(initState.channelList);
