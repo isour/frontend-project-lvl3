@@ -6,7 +6,7 @@ import { sel, SELECTORS } from './helpers.js';
 import yupLocale from './localization/yup.js';
 import watch from './watcher.js';
 
-const getProxiedUrl = (url) => `https://allorigins.hexlet.app/raw?url=${url}`;
+const getProxiedUrl = (url) => `https://allorigins.hexlet.app/get?url=${url}`;
 
 const state = {
   rssForm: {
@@ -70,7 +70,7 @@ const getFeed = (url, update = false) => {
     .then((response) => {
       let parsedRSS;
       try {
-        parsedRSS = parser.parseFromString(response.data, 'text/xml');
+        parsedRSS = parser.parseFromString(response.data.contents, 'text/xml');
       } catch (error) {
         setError(error, 'invalid');
       }
