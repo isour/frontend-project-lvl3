@@ -5,6 +5,7 @@ import axios from 'axios';
 import { sel, SELECTORS } from './helpers.js';
 import yupLocale from './localization/yup.js';
 import watch from './watcher.js';
+import i18 from './localization/locale.js';
 
 const getProxiedUrl = (url) => {
   const urlResult = new URL('/get', 'https://allorigins.hexlet.app');
@@ -33,7 +34,7 @@ const state = {
   },
 };
 
-const watchedState = watch(state);
+const watchedState = watch(state, i18());
 
 const setError = (errorKey, errorStatus) => {
   watchedState.rssForm.url.errorKey = errorKey;
@@ -44,7 +45,6 @@ const setError = (errorKey, errorStatus) => {
 const uid = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
 
 const validateURL = (value) => {
-  setLocale(yupLocale);
   const validationSchema = string().url().required();
 
   return validationSchema
@@ -162,7 +162,10 @@ const init = () => {
   document.querySelector(SELECTORS.form).addEventListener('submit', formSubmit);
   document.querySelector(SELECTORS.posts).addEventListener('click', modalClick);
 
+  const i18Instance = i18;
+  setLocale(yupLocale);
   updateFeeds();
+  return i18Instance;
 };
 
 export { init as default };
