@@ -160,4 +160,4 @@ const init = () => {
   updateFeeds();
 };
 
-export { SELECTORS, init as default };
+export { init as default };
