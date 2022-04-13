@@ -1,6 +1,4 @@
 // @ts-check
-import setError from './init.js'
-
 const uid = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
 
 const init = (url, raw, state) => {

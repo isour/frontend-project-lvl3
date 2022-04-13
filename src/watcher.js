@@ -13,12 +13,14 @@ const init = (initState, i18) => {
     switch (status) {
       case 'pending':
         buttonSubmit$.disabled = true;
+        input$.readOnly = true;
         break;
       case 'invalid':
         input$.classList.add('is-invalid');
         error$.classList.add('text-danger');
         error$.classList.remove('text-success');
         buttonSubmit$.disabled = false;
+        input$.readOnly = false;
         break;
       case 'valid':
         error$.classList.add('text-success');
@@ -26,6 +28,7 @@ const init = (initState, i18) => {
         input$.classList.remove('is-invalid');
         input$.focus();
         buttonSubmit$.disabled = false;
+        input$.readOnly = false;
         break;
       default:
         throw new Error(`Unknown status: '${status}'`);
