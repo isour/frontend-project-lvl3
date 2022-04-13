@@ -2,7 +2,7 @@
 import onChange from 'on-change';
 import { sel, SELECTORS } from './helpers.js';
 
-const init = (initState, i18) => {
+export default (initState, i18) => {
   const renderForm = (state) => {
     const { errorKey } = state.rssForm.url;
     const { status } = state.rssForm;
@@ -110,5 +110,3 @@ const init = (initState, i18) => {
 
   return watchedState;
 };
-
-export default init;
