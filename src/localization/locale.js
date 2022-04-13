@@ -1,7 +1,7 @@
 import i18next from 'i18next';
 import resources from './locale_resources.js';
 
-const init = () => {
+export default () => {
   const i18Instance = i18next.createInstance();
 
   i18Instance.init({
@@ -12,5 +12,3 @@ const init = () => {
 
   return i18Instance;
 };
-
-export { init as default };

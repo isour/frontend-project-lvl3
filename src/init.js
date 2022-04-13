@@ -14,7 +14,7 @@ const setError = (errorKey, errorStatus, state) => {
   if (errorStatus === 'valid') state.rssForm.url.value = null;
 };
 
-const init = () => {
+export default () => {
   const getProxiedUrl = (url) => {
     const urlResult = new URL('/get', 'https://allorigins.hexlet.app');
     urlResult.searchParams.set('url', url);
@@ -136,5 +136,3 @@ const init = () => {
   updateFeeds();
   return i18Instance;
 };
-
-export { init as default, setError };
