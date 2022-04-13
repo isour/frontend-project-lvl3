@@ -118,6 +118,7 @@ const init = () => {
         }
       })
       .catch((error) => {
+        setError('badRSS', 'invalid');
         console.log(error);
       });
   };
