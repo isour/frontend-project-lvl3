@@ -6,6 +6,7 @@ import { sel, SELECTORS } from './helpers.js';
 import yupLocale from './localization/yup.js';
 import watch from './watcher.js';
 import i18 from './localization/locale.js';
+import parseRss from './rss.js';
 
 const init = () => {
   const getProxiedUrl = (url) => {
@@ -37,14 +38,6 @@ const init = () => {
   
   const watchedState = watch(state, i18());
   
-  const setError = (errorKey, errorStatus) => {
-    watchedState.rssForm.url.errorKey = errorKey;
-    watchedState.rssForm.status = errorStatus;
-    if (errorStatus === 'valid') watchedState.rssForm.url.value = null;
-  };
-  
-  const uid = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
-  
   const validateURL = (value) => {
     const validationSchema = string().url().required();
   
@@ -69,56 +62,22 @@ const init = () => {
   };
   
   const getFeed = (url, update = false) => {
-    let feedObject = {};
-  
-    const parser = new DOMParser();
     return axios.get(getProxiedUrl(url))
       .then((response) => {
-        let parsedRSS;
-        try {
-          parsedRSS = parser.parseFromString(response.data.contents, 'text/xml');
-        } catch (error) {
-          setError('badRSS', 'invalid');
-        }
-        const currentId = uid();
-  
-        feedObject = {
-          url,
-          id: currentId,
-          status: 'loaded',
-          title: parsedRSS.querySelector('title').textContent,
-          description: parsedRSS.querySelector('description').textContent,
-        };
-  
-        const newPosts = [...parsedRSS.querySelectorAll('item')];
-        const oldsPosts = watchedState.postsList.map((post) => post.title);
-  
-        const differenceItems$ = newPosts.filter((x) => !oldsPosts.includes(x.querySelector('title').textContent));
-  
-        const differecePosts = [];
-        differenceItems$.forEach((item) => {
-          differecePosts.push({
-            title: item.querySelector('title').textContent,
-            guid: uid(),
-            link: item.querySelector('link').textContent,
-            description: item.querySelector('description').textContent,
-            pubDate: item.querySelector('pubDate').textContent,
-            parentId: currentId,
-          });
-        });
+        let parsedRSS = parseRss(url, response.data.contents, watchedState);
   
         watchedState.postsList = [
           ...watchedState.postsList,
-          ...differecePosts,
+          ...parsedRSS.differecePosts,
         ];
   
         if (!update) {
-          watchedState.channelList.push(feedObject);
-          setError('rssLoaded', 'valid');
+          watchedState.channelList.push(parsedRSS.feedObject);
+          setError('rssLoaded', 'valid', watchedState);
         }
       })
       .catch((error) => {
-        setError('network', 'invalid');
+        setError(error.isParsing ? 'badRSS' : 'network', 'invalid', watchedState);
         console.log(error);
       });
   };
@@ -130,7 +89,7 @@ const init = () => {
       getFeed(currentURL, update);
       return;
     }
-    setError('rssExist', 'invalid');
+    setError('rssExist', 'invalid', watchedState);
   };
   
   const formSubmit = (event) => {
@@ -145,7 +104,7 @@ const init = () => {
         if (!error) {
           processRSS(watchedState.rssForm.url.value);
         } else {
-          setError(error, 'invalid');
+          setError(error, 'invalid', watchedState);
         }
       })
       .catch((e) => e.message);
@@ -169,4 +128,10 @@ const init = () => {
   return i18Instance;
 };
 
-export { init as default };
+const setError = (errorKey, errorStatus, state) => {
+  state.rssForm.url.errorKey = errorKey;
+  state.rssForm.status = errorStatus;
+  if (errorStatus === 'valid') state.rssForm.url.value = null;
+};
+
+export { init as default, setError };
