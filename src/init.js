@@ -78,7 +78,7 @@ const init = () => {
         try {
           parsedRSS = parser.parseFromString(response.data.contents, 'text/xml');
         } catch (error) {
-          setError(error, 'invalid');
+          setError('badRSS', 'invalid');
         }
         const currentId = uid();
   
@@ -118,7 +118,7 @@ const init = () => {
         }
       })
       .catch((error) => {
-        setError('badRSS', 'invalid');
+        setError('network', 'invalid');
         console.log(error);
       });
   };
