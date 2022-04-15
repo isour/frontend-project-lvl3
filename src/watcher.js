@@ -40,15 +40,14 @@ export default (initState, i18) => {
   const renderPosts = (state) => {
     const posts$ = sel(SELECTORS.posts);
 
-    const feedFragment$ = new DocumentFragment()
+    const feedFragment$ = new DocumentFragment();
     state.postsList.forEach((post) => {
-      const postWatched = state.uiState.watchedPosts.includes(post.guid);
-
       const li$ = document.createElement('li');
       li$.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
 
+      const linkClass = state.uiState.watchedPosts.includes(post.guid) ? ['link-secondary', 'fw-normal'] : 'fw-bold';
       const a$ = document.createElement('a');
-      a$.classList.add(postWatched ? 'link-secondary fw-normal' : 'fw-bold');
+      a$.classList.add(linkClass);
       a$.setAttribute('href', post.link);
       a$.textContent = post.title;
       li$.appendChild(a$);
