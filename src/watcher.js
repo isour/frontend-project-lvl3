@@ -3,12 +3,13 @@ import onChange from 'on-change';
 import { sel, SELECTORS } from './helpers.js';
 
 export default (initState, i18) => {
+  const input$ = sel(SELECTORS.input);
+  const error$ = sel(SELECTORS.error);
+  const buttonSubmit$ = sel(SELECTORS.buttonSubmit);
+
   const renderForm = (state) => {
     const { errorKey } = state.rssForm.url;
     const { status } = state.rssForm;
-    const input$ = sel(SELECTORS.input);
-    const error$ = sel(SELECTORS.error);
-    const buttonSubmit$ = sel(SELECTORS.buttonSubmit);
 
     switch (status) {
       case 'pending':
@@ -38,25 +39,42 @@ export default (initState, i18) => {
 
   const renderPosts = (state) => {
     const posts$ = sel(SELECTORS.posts);
-    let feedsHTML = '';
 
+    const feedFragment$ = new DocumentFragment()
     state.postsList.forEach((post) => {
       const postWatched = state.uiState.watchedPosts.includes(post.guid);
-      feedsHTML += `
-        <li class='list-group-item d-flex justify-content-between align-items-start border-0 border-end-0'>
-          <a href='${post.link}' class='${postWatched ? 'link-secondary fw-normal' : 'fw-bold'}' data-id='2' target='_blank' rel='noopener noreferrer'>${post.title}</a>
-          <button type='button' class='btn btn-outline-primary btn-sm' data-id='${post.guid}' data-bs-toggle='modal' data-bs-target='#modal'>Просмотр</button>
-        </li>`;
+
+      const li$ = document.createElement('li');
+      li$.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
+
+      const a$ = document.createElement('a');
+      a$.classList.add(postWatched ? 'link-secondary fw-normal' : 'fw-bold');
+      a$.setAttribute('href', post.link);
+      a$.textContent = post.title;
+      li$.appendChild(a$);
+
+      const button$ = document.createElement('button');
+      button$.classList.add('btn', 'btn-outline-primary', 'btn-sm');
+      button$.setAttribute('type', 'button');
+      button$.setAttribute('data-bs-toggle', 'modal');
+      button$.setAttribute('data-bs-target', '#modal');
+      button$.setAttribute('data-id', post.guid);
+      button$.textContent = i18.t('ui.view');
+      li$.appendChild(button$);
+
+      feedFragment$.appendChild(li$);
     });
 
     posts$.innerHTML = `
       <div class='card border-0'>
         <div class='card-body'>
-          <h2 class='card-title h4'>Посты</h2>
+          <h2 class='card-title h4'>${i18.t('ui.posts')}</h2>
         </div>
-        <ul class='list-group border-0 rounded-0'>${feedsHTML}</ul>
+        <ul class='list-group border-0 rounded-0'></ul>
       </div>
     `;
+
+    posts$.querySelector('.list-group').appendChild(feedFragment$);
   };
 
   const renderChannels = (channels) => {

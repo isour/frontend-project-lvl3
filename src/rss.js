@@ -1,6 +1,4 @@
 // @ts-check
-const uid = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
-
 const init = (url, raw, state) => {
   const parser = new DOMParser();
   let feedObject = {};
@@ -14,13 +12,12 @@ const init = (url, raw, state) => {
     throw error;
   }
 
-  const currentId = uid();
+  const title = parsed.querySelector('title').textContent;
 
   feedObject = {
     url,
-    id: currentId,
-    status: 'loaded',
-    title: parsed.querySelector('title').textContent,
+    id: title,
+    title,
     description: parsed.querySelector('description').textContent,
   };
 
@@ -33,11 +30,10 @@ const init = (url, raw, state) => {
   differenceItems$.forEach((item) => {
     differecePosts.push({
       title: item.querySelector('title').textContent,
-      guid: uid(),
+      guid: item.querySelector('guid').textContent,
       link: item.querySelector('link').textContent,
       description: item.querySelector('description').textContent,
-      pubDate: item.querySelector('pubDate').textContent,
-      parentId: currentId,
+      parentId: title,
     });
   });
 

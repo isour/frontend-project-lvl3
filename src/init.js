@@ -53,20 +53,6 @@ export default () => {
       .catch((e) => e.message);
   };
 
-  const updateFeeds = () => {
-    setTimeout(() => {
-      const promises = [];
-      watchedState.channelList.forEach((channel) => {
-        // eslint-disable-next-line no-use-before-define
-        promises.push(processRSS(channel.url, true));
-      });
-      const promise = Promise.all(promises);
-      return promise.finally(() => {
-        updateFeeds();
-      });
-    }, 5000);
-  };
-
   const getFeed = (url, update = false) => axios
     .get(getProxiedUrl(url))
     .then((response) => {
@@ -91,14 +77,15 @@ export default () => {
       console.log(error);
     });
 
-  const processRSS = (currentURL, update = false) => {
-    const { channelList } = watchedState;
-    if (channelList.filter((feed) => feed.url === currentURL).length === 0 || update) {
-      if (!update) watchedState.rssForm.url.value = '';
-      getFeed(currentURL, update);
-      return;
-    }
-    setError('rssExist', 'invalid', watchedState);
+  const updateFeeds = () => {
+    setTimeout(() => {
+      const promises = watchedState.channelList;
+      promises.map((channel) => getFeed(channel.url, true));
+      const promise = Promise.all(promises);
+      return promise.finally(() => {
+        updateFeeds();
+      });
+    }, 5000);
   };
 
   const formSubmit = (event) => {
@@ -111,7 +98,15 @@ export default () => {
     validateURL(inputValue)
       .then((error) => {
         if (!error) {
-          processRSS(watchedState.rssForm.url.value);
+          const { channelList } = watchedState;
+          const currentURL = watchedState.rssForm.url.value;
+
+          if (channelList.filter((feed) => feed.url === currentURL).length === 0) {
+            watchedState.rssForm.url.value = '';
+            getFeed(currentURL, false);
+          } else {
+            setError('rssExist', 'invalid', watchedState);
+          }
         } else {
           setError(error, 'invalid', watchedState);
         }

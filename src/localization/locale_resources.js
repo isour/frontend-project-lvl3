@@ -6,6 +6,10 @@ export default {
       badRSS: 'Ресурс не содержит валидный RSS',
       network: 'Ошибка сети',
       rssLoaded: 'RSS успешно загружен',
+      ui: {
+        view: 'Просмотр',
+        posts: 'Посты',
+      },
     },
   },
 };
