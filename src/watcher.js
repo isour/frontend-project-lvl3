@@ -9,7 +9,7 @@ export default (initState, i18) => {
 
   const renderForm = (state) => {
     const { errorKey } = state.rssForm.url;
-    const { status } = state.rssForm;
+    const { status } = state;
 
     switch (status) {
       case 'pending':
@@ -23,7 +23,7 @@ export default (initState, i18) => {
         buttonSubmit$.disabled = false;
         input$.readOnly = false;
         break;
-      case 'valid':
+      case null:
         error$.classList.add('text-success');
         error$.classList.remove('text-danger');
         input$.classList.remove('is-invalid');
@@ -119,7 +119,7 @@ export default (initState, i18) => {
         renderChannels(initState.channelList);
         renderPosts(initState);
       }
-      if (path === 'rssForm.status') {
+      if (path === 'status') {
         renderForm(initState);
       }
     },

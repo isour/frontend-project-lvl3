@@ -1,18 +1,13 @@
 // @ts-check
 
-import { setLocale, string } from 'yup';
+import * as yup from 'yup';
 import axios from 'axios';
+import i18next from 'i18next';
 import { sel, SELECTORS } from './helpers.js';
 import yupLocale from './localization/yup.js';
 import watch from './watcher.js';
-import i18 from './localization/locale.js';
+import resources from './localization/locale_resources.js';
 import parseRss from './rss.js';
-
-const setError = (errorKey, errorStatus, state) => {
-  state.rssForm.url.errorKey = errorKey;
-  state.rssForm.status = errorStatus;
-  if (errorStatus === 'valid') state.rssForm.url.value = null;
-};
 
 export default () => {
   const getProxiedUrl = (url) => {
@@ -42,92 +37,108 @@ export default () => {
     },
   };
 
-  const watchedState = watch(state, i18());
+  const i18Instance = i18next.createInstance();
 
-  const validateURL = (value) => {
-    const validationSchema = string().url().required();
+  const i18Promise = i18Instance.init({
+    lng: 'ru',
+    debug: false,
+    resources,
+  }).then(() => {
+    yup.setLocale(yupLocale);
+    const validationSchema = yup.string().url().required();
 
-    return validationSchema
-      .validate(value)
-      .then(() => null)
-      .catch((e) => e.message);
-  };
+    const validateURL = (url, currentState) => {
+      const { channelList } = currentState;
 
-  const getFeed = (url, update = false) => axios
-    .get(getProxiedUrl(url))
-    .then((response) => {
-      const parsedRSS = parseRss(url, response.data.contents, watchedState);
+      const channelURLs = channelList.map((channel) => channel.url);
+      const currentSchema = validationSchema.notOneOf(channelURLs);
 
-      watchedState.postsList = [
-        ...watchedState.postsList,
-        ...parsedRSS.differecePosts,
-      ];
+      return currentSchema
+        .validate(url)
+        .then(() => null)
+        .catch((e) => e.message);
+    };
 
-      if (!update) {
-        watchedState.channelList.push(parsedRSS.feedObject);
-        setError('rssLoaded', 'valid', watchedState);
-      }
-    })
-    .catch((error) => {
-      setError(
-        error.isParsing ? 'badRSS' : 'network',
-        'invalid',
-        watchedState,
-      );
-      console.log(error);
-    });
+    const watchedState = watch(state, i18Instance);
 
-  const updateFeeds = () => {
-    setTimeout(() => {
-      const promises = watchedState.channelList;
-      promises.map((channel) => getFeed(channel.url, true));
-      const promise = Promise.all(promises);
-      return promise.finally(() => {
-        updateFeeds();
-      });
-    }, 5000);
-  };
+    const getFeed = (url) => axios
+      .get(getProxiedUrl(url))
+      .then((response) => {
+        const parsedRSS = parseRss(url, response.data.contents, watchedState);
 
-  const formSubmit = (event) => {
-    event.preventDefault();
-    const inputValue = sel(SELECTORS.input).value.trim();
-
-    watchedState.rssForm.url.value = inputValue;
-    watchedState.rssForm.status = 'pending';
-
-    validateURL(inputValue)
-      .then((error) => {
-        if (!error) {
-          const { channelList } = watchedState;
-          const currentURL = watchedState.rssForm.url.value;
-
-          if (channelList.filter((feed) => feed.url === currentURL).length === 0) {
-            watchedState.rssForm.url.value = '';
-            getFeed(currentURL, false);
-          } else {
-            setError('rssExist', 'invalid', watchedState);
-          }
-        } else {
-          setError(error, 'invalid', watchedState);
-        }
+        watchedState.postsList = [
+          ...watchedState.postsList,
+          ...parsedRSS.differecePosts,
+        ];
       })
-      .catch((e) => e.message);
-  };
+      .catch((error) => {
+        console.log(error);
+      });
 
-  const modalClick = (event) => {
-    if (!('id' in event.target.dataset)) {
-      return;
-    }
+    const getRSS = (url) => axios
+      .get(getProxiedUrl(url))
+      .then((response) => {
+        const parsedRSS = parseRss(url, response.data.contents, watchedState);
 
-    watchedState.modal.id = event.target.dataset.id;
-    watchedState.uiState.watchedPosts.push(watchedState.modal.id);
-  };
+        watchedState.postsList = [
+          ...watchedState.postsList,
+          ...parsedRSS.differecePosts,
+        ];
 
-  document.querySelector(SELECTORS.form).addEventListener('submit', formSubmit);
-  document.querySelector(SELECTORS.posts).addEventListener('click', modalClick);
+        watchedState.channelList.push(parsedRSS.feedObject);
+        watchedState.rssForm.url.errorKey = 'rssLoaded';
+        watchedState.status = null;
+        watchedState.rssForm.url.value = null;
+      })
+      .catch((error) => {
+        watchedState.rssForm.url.errorKey = error.isParsing ? 'badRSS' : 'network';
+        watchedState.status = 'invalid';
+      });
 
-  const i18Instance = i18;
-  setLocale(yupLocale);
-  updateFeeds();
-  return i18Instance;
+    const updateFeeds = () => {
+      setTimeout(() => {
+        const promises = watchedState.channelList;
+        promises.map((channel) => getFeed(channel.url, false));
+        const promise = Promise.all(promises);
+        return promise.finally(() => {
+          updateFeeds();
+        });
+      }, 5000);
+    };
+
+    const formSubmit = (event) => {
+      event.preventDefault();
+      const inputValue = sel(SELECTORS.input).value.trim();
+
+      watchedState.rssForm.url.value = inputValue;
+      watchedState.status = 'pending';
+
+      validateURL(inputValue, watchedState)
+        .then((error) => {
+          if (!error) {
+            const currentURL = watchedState.rssForm.url.value;
+            getRSS(currentURL);
+          } else {
+            watchedState.rssForm.url.errorKey = error;
+            watchedState.status = 'invalid';
+          }
+        })
+        .catch((e) => e.message);
+    };
+
+    const modalClick = (event) => {
+      if (!('id' in event.target.dataset)) {
+        return;
+      }
+
+      watchedState.modal.id = event.target.dataset.id;
+      watchedState.uiState.watchedPosts.push(watchedState.modal.id);
+    };
+
+    updateFeeds();
+    document.querySelector(SELECTORS.form).addEventListener('submit', formSubmit);
+    document.querySelector(SELECTORS.posts).addEventListener('click', modalClick);
+  });
+
+  return i18Promise;
 };
